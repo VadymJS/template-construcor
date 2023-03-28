@@ -1,0 +1,14 @@
+.aside {
+    width: 100%;
+    background-color: $color-secondary;
+    
+    @include media(md) {
+        min-height: 100%;
+        width: 40px;
+    }
+    
+    .logo {
+        display: inline-block;
+        margin: 8px;
+    }
+}
