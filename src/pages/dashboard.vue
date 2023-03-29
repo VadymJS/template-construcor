@@ -49,13 +49,8 @@
     </div>
 </template>
 
-<script>
+<script setup>
 
 import Sidebar from '../components/Sidebar.vue';
 
-export default {
-    components: {
-        Sidebar
-    }
-}
 </script>

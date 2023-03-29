@@ -29,7 +29,7 @@
                         </div>
                     </div>
                     <div class="constructor-body-upload form-group">
-                        <UploadImages @changed="handleImages" ref="uploadImagesRef" />
+                        <UploadImages @changed="handleImages" ref="uploadImages" />
                     </div>
 
                     <div class="form-row">
@@ -93,105 +93,109 @@
     </div>
 </template>
 
-<script setup>
+<script>
 
-import { useRoute, useRouter } from 'vue-router'
-import { ref, onMounted, computed } from 'vue';
 import Sidebar from '../components/Sidebar.vue';
-import { useStore } from "vuex";
+import { mapGetters } from "vuex";
 import UploadImages from "vue-upload-drop-images";
 
-const route = useRoute();
-const router = useRouter();
-const store = useStore();
+export default {
+    mounted() {
+        this.template = this.templateCopy;
 
-const editMode = ref(false);
-const template = ref({});
-const templateCopy = computed(() => {
-    if (route.params?.id) {
-        return store.getters.getTemplateById(route.params.id)
-    } else {
+        if (this.$route.params?.id) {
+            if (this.$store.state.templates.length) {
+                this.editMode = true;
+                setTimeout(() => {
+                    if (this.template?.imgUrl?.length) {
+                        this.$refs.uploadImages.Imgs = this.template.imgUrl; 
+                    }
+                }, 500)
+            } else {
+                this.$router.push('/');
+            }
+        }
+    },
+
+    data() {
         return {
-            isVisible: true,
-        };
-    }
-});
-const validation = ref({
-    id: null,
-    title: null,
-    url: null,
-})
-
-function addTemplate() {
-    validation.value.id = null;
-    validation.value.title = null;
-    validation.value.url = null;
-
-    if (!template.value.id || !template.value.title || !template.value.url) {
-        if (!template.value.id) {
-            validation.value.id = 'ID cant be empty';
+            editMode: false,
+            template: null,
+            validation: {
+                id: null,
+                title: null,
+                url: null
+            }
         }
-        if (!template.value.title) {
-            validation.value.title = 'Title cant be empty';
-        }
-        if (!template.value.url) {
-            validation.value.url = 'Url cant be empty';
-        }
-        return;
-    }
-
-    if (isNaN(+template.value.id)) {
-        validation.value.id = 'Use digits for ID';
-        return;
-    }
-
-    store.state.templates.forEach((template) => {
-        if (parseFloat(templateCopy.value.id) === parseFloat(template.id)) {
-            validation.value.id = 'Already had this ID';
-            return;
-        }
-    })
-
-    if (!validation.value.id) {
-        store.dispatch('addTemplate', template.value);
-        router.push('/');
-    }
-}
-
-function editTemplate() {
-    store.dispatch('editTemplate', {oldObj: templateCopy.value, copyObj: template.value});
-    router.push('/');
-}
-
-function deleteTemplate() {
-    store.dispatch('deleteTemplate', templateCopy.value.id);
-    router.push('/');
-}
-
-const uploadImagesRef = ref(null);
-
-function handleImages(files) {
-    setTimeout(() => {
-        template.value.imgUrl = uploadImagesRef.value.Imgs;
-    }, 500);
-}
-
-onMounted(() => {
-    template.value = templateCopy.value;
-
-    if (route.params?.id) {
-        if (store.state.templates.length) {
-            editMode.value = true;
-
-            setTimeout(() => {
-                if (template.value.imgUrl?.length) {
-                    uploadImagesRef.value.Imgs = template.value.imgUrl; 
+    },
+    computed: {
+        ...mapGetters(["getTemplateById"]),
+        templateCopy() {
+            if (this.$route.params?.id) {
+                return this.getTemplateById(this.$route.params.id);
+            } else {
+                return {
+                    isVisible: true,
                 }
-            }, 500)
-        } else {
-            router.push('/');
+            }
         }
-    } 
-})
+    },
+    methods: {
+        handleImages(files){
+            setTimeout(() => {
+                this.template.imgUrl = this.$refs.uploadImages.Imgs;
+            }, 500);
+        },
 
+        addTemplate() {
+            this.validation.id = null;
+            this.validation.title = null;
+            this.validation.url = null;
+
+            if (!this.template.id || !this.template.title || !this.template.url) {
+                if (!this.template.id) {
+                    this.validation.id = 'ID cant be empty';
+                }
+                if (!this.template.title) {
+                    this.validation.title = 'Title cant be empty';
+                }
+                if (!this.template.url) {
+                    this.validation.url = 'Url cant be empty';
+                }
+                return;
+            }
+
+            if (isNaN(+this.template.id)) {
+                this.validation.id = 'Use digits for ID';
+                return;
+            }
+ 
+            this.$store.state.templates.forEach((template) => {
+                if (parseFloat(this.templateCopy.id) === parseFloat(template.id)) {
+                    this.validation.id = 'Already had this ID';
+                    return;
+                }
+            })
+
+            if (!this.validation.id) {
+                this.$store.dispatch('addTemplate', this.template);
+                this.$router.push('/');
+            }
+        },
+
+        editTemplate() {
+            this.$store.dispatch('editTemplate', {oldObj: this.templateCopy, copyObj: this.template});
+            this.$router.push('/');
+        },
+
+        deleteTemplate() {
+            this.$store.dispatch('deleteTemplate', this.templateCopy.id);
+            this.$router.push('/');
+        },
+    },
+    components: {
+        Sidebar,
+        UploadImages
+    }
+}
 </script>
